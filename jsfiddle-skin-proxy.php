@@ -2,19 +2,19 @@
 
 class jsfiddle_skin_proxy {
 	
-	public static function process($id, $result = false, $tabs = 'js,html,css,result') {
+	public static function process($id, $skindir, $result = false, $tabs = 'js,html,css,result', $skin = 'default') {
 		
 		$url = $result ? 'http://fiddle.jshell.net/'.$id.'/show/light/' : 'http://fiddle.jshell.net/'.$id.'/embedded/'.urlencode($tabs).'/';
 		
-		static::validate($id);
-		$output = static::get_contents($url);
-		$output = static::parse($output,$id);
+		self::validate($id);
+		$output = self::get_contents($url);
+		$output = self::parse($output,$id,$skindir,$skin);
 		
 		return $output;
 		
 	}
 	
-	public static function parse($output,$id) {
+	public static function parse($output,$id,$skindir,$skin) {
 		$output = preg_replace(
 			array(
 				'/(src\=\")\//i',
@@ -38,24 +38,42 @@ class jsfiddle_skin_proxy {
 			$output
 		);
 		
-		$output = str_replace(
-			'</head>',
-			"<link rel=\"stylesheet\" type=\"text/css\" href=\"$url_proxy/skins/dark/style.css\" />\n" .
-			"<script type=\"text/javascript\" src=\"$url_proxy/js/scripts.js\"></script>\n" .
-			"</head>",
-			$output
-		);
-		
+		//if there was a skin passed
+		if($skin !== 'default') {
+			//set up the link structure
+			$skin_link = $skindir . $skin;
+			//check for style definition
+			$header_response = get_headers($skin_link . '/style.css', 1);
+			if(strpos($header_response[0],"404") !== false) {
+				//there is no style definition for the requested theme
+			} else {
+				//check for script definition
+				$header_response = get_headers($skin_link . '/js/scripts.js', 1);
+				if(strpos($header_response[0],"404") !== false) {
+					$script_link = '';
+				} else {
+					$script_link = '<script type="text/javascript" src="' . $skin_link . '/js/scripts.js"></script>' . "\n";
+				}
+				//add custom css and js to bottom of the <head>
+				$output = str_replace(
+					'</head>',
+					'<link rel="stylesheet" type="text/css" href="' . $skin_link . '/style.css" />' . "\n" .
+					$script_link . 
+					'</head>',
+					$output
+				);
+			}
+		}
 		return $output;
 	}
 	
 	public static function get_contents($url) {
 		$ch = curl_init();
 		
-		curl_setopt($ch, CURLOPT_URL, 			$url);
-		curl_setopt($ch, CURLOPT_HEADER, 		0);
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_HEADER, 0);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER,true);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 		15);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 15);
 		
 		$output = curl_exec($ch);
 		curl_close($ch);
