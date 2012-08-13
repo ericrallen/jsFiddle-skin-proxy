@@ -5,7 +5,7 @@ Forked from [@Naatan](https://github.com/Naatan/)'s [jsFiddle-skin-proxy](https:
 
 ![Example of multiple skins](http://dl.dropbox.com/u/10476852/jsFiddle-skin-proxy.png)
 
-(note: the link in the image above is inserted by part of a Wordpress plug-in and is not included in this script)
+(note: the skin on the left was created by [@Naatan](https://github.com/Naatan/) and the one on the right is just a modified version of it where I switched some blacks to greys)
 
 Changes in this version:
 ========================
